@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  # Feature branches are checked through their pull request; this avoids running CI twice.
+  push:
+    branches: [main]
+  pull_request:
+  # Lets deploy.yml run exactly these checks before deploying.
+  workflow_call:
+
+# CI only reads the repo. The deploy workflow requests id-token for OIDC separately.
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older run pointless. github.workflow is the
+# caller's name when called from deploy.yml, so the two never cancel each other.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CDK_DISABLE_CLI_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Known vulnerabilities in packages that ship inside the Lambdas fail the build.
+      # Dev tooling is excluded: it never runs in AWS, and Dependabot keeps it current.
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Test
+        run: npm test
+
+      # No AWS credentials here: stacks synthesize environment-agnostic. Placeholder context
+      # makes the optional stacks synthesize too, so every stack is checked on every push.
+      - name: CDK synth
+        run: npx cdk synth --quiet -c budgetEmail=ci@example.com -c githubRepo=example/eventstream

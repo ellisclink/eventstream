@@ -1,0 +1,59 @@
+{
+  "name": "eventstream",
+  "version": "0.0.0",
+  "description": "Serverless game telemetry pipeline on AWS (CDK, Lambda, SQS, DynamoDB, Firehose, Athena)",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "jest",
+    "synth": "cdk synth",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run synth -- --quiet -c budgetEmail=ci@example.com -c githubRepo=example/eventstream",
+    "loadgen": "tsx tools/loadgen/src/cli.ts",
+    "stack-info": "tsx tools/stack-info/src/cli.ts"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "^2.36.0",
+    "@aws-lambda-powertools/metrics": "^2.36.0",
+    "@aws-lambda-powertools/tracer": "^2.36.0",
+    "@aws-sdk/client-dynamodb": "^3.1150.0",
+    "@aws-sdk/client-firehose": "^3.1150.0",
+    "@aws-sdk/client-sqs": "^3.1150.0",
+    "@aws-sdk/lib-dynamodb": "^3.1150.0",
+    "aws-cdk-lib": "^2.273.0",
+    "constructs": "^10.8.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-api-gateway": "^3.1150.0",
+    "@aws-sdk/client-cloudformation": "^3.1150.0",
+    "@eslint/js": "^10.0.1",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.6.5",
+    "aws-cdk": "^2.1145.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "aws-sdk-client-mock-jest": "^4.1.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "jest": "^30.5.2",
+    "js-yaml": "^5.4.3",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.14",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  }
+}
