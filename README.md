@@ -97,10 +97,10 @@ payload         typed per event_type (packages/schema/src/payloads.ts)
 
 ## Documentation
 
-| Doc                                       | Contents                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------- |
-| [architecture.md](docs/architecture.md)   | Diagram, lifecycle, guarantees, layout                            |
-| [cost-and-load.md](docs/cost-and-load.md) | Cost model, throughput limits, load-test plan                     |
+| Doc                                       | Contents                                      |
+| ----------------------------------------- | --------------------------------------------- |
+| [architecture.md](docs/architecture.md)   | Diagram, lifecycle, guarantees, layout        |
+| [cost-and-load.md](docs/cost-and-load.md) | Cost model, throughput limits, load-test plan |
 
 ## Roadmap
 
