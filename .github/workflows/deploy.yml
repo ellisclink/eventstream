@@ -1,0 +1,75 @@
+name: Deploy
+
+# Deploys EventstreamStack to the dev account after the full CI checks pass on main.
+# Inactive until the AWS_DEPLOY_ROLE_ARN repository variable is set (docs/setup-cicd.md).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a deploy halfway; queue the next one instead.
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: checks
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The IAM role trusts only tokens issued for this environment. Add required reviewers
+    # to it in GitHub settings to make every deploy wait for a manual approval.
+    environment: dev
+    permissions:
+      contents: read
+      # Lets the job request a GitHub OIDC token to exchange for AWS credentials.
+      id-token: write
+    env:
+      CDK_DISABLE_CLI_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: eventstream-deploy-${{ github.run_id }}
+
+      - name: Diff
+        run: npx cdk diff EventstreamStack -c alertEmail="${{ vars.ALERT_EMAIL }}"
+
+      - name: Deploy
+        run: >
+          npx cdk deploy EventstreamStack
+          --require-approval never
+          --outputs-file cdk-outputs.json
+          -c alertEmail="${{ vars.ALERT_EMAIL }}"
+
+      # Requests without an API key must be refused: this proves both APIs are live and that
+      # authentication is enforced, without the job needing to read any key value.
+      - name: Smoke test
+        run: |
+          output() { node -e "const o=require('./cdk-outputs.json').EventstreamStack;console.log(Object.entries(o).find(([k])=>k.startsWith('$1'))[1])"; }
+          ingest=$(output IngestApiUrl)
+          stats=$(output StatsApiUrl)
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST "${ingest}events" -H 'content-type: application/json' -d '{"events":[]}')
+          echo "POST /events without key -> ${status}"
+          test "${status}" = "403"
+          status=$(curl -s -o /dev/null -w '%{http_code}' "${stats}stats/daily/2026-01-01")
+          echo "GET /stats without key -> ${status}"
+          test "${status}" = "403"
