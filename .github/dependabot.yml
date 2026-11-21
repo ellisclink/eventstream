@@ -1,0 +1,22 @@
+# Weekly dependency updates as pull requests; CI must pass before you merge them.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR per family instead of dozens of tiny ones.
+      aws-sdk:
+        patterns: ['@aws-sdk/*']
+      aws-cdk:
+        patterns: ['aws-cdk', 'aws-cdk-lib', 'constructs']
+      powertools:
+        patterns: ['@aws-lambda-powertools/*']
+      dev-tooling:
+        dependency-type: development
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
